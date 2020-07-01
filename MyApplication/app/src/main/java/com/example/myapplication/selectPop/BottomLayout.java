@@ -1,25 +1,18 @@
 package com.example.myapplication.selectPop;
 
 import android.content.Context;
-import android.graphics.drawable.BitmapDrawable;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.PopupWindow;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
 import com.example.myapplication.R;
 
-/**
- * @see {@link BottomLayout }
- */
-@Deprecated
-public class BottomSheet extends PopupWindow implements CompoundButton.OnCheckedChangeListener, View.OnClickListener {
+public class BottomLayout extends LinearLayout implements CompoundButton.OnCheckedChangeListener, View.OnClickListener {
 
     private CheckBox checkbox;
     private TextView action, count;
@@ -27,11 +20,11 @@ public class BottomSheet extends PopupWindow implements CompoundButton.OnChecked
     private StateChangeListener listener;
     private View contentView;
 
-    public BottomSheet(@NonNull Context context) {
-        contentView = LayoutInflater.from(context).inflate(R.layout.layout_bottom_sheet, null);
-        setContentView(contentView);
-        setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
-        setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+    private boolean isShowing;
+
+    public BottomLayout(@NonNull Context context) {
+        super(context);
+        contentView = LayoutInflater.from(context).inflate(R.layout.layout_bottom_sheet, this, true);
         checkbox = contentView.findViewById(R.id.checkbox);
         action = contentView.findViewById(R.id.action);
         count = contentView.findViewById(R.id.count);
@@ -39,8 +32,8 @@ public class BottomSheet extends PopupWindow implements CompoundButton.OnChecked
         checkbox.setOnCheckedChangeListener(this);
         rlAction.setOnClickListener(this);
         setEnable(false);
-        setBackgroundDrawable(new BitmapDrawable());
-        setOutsideTouchable(false);
+        setVisibility(GONE);
+        isShowing = false;
     }
 
     public void setStateChangeListener(StateChangeListener listener) {
@@ -67,11 +60,16 @@ public class BottomSheet extends PopupWindow implements CompoundButton.OnChecked
 
     public void show() {
         reset();
-        if (isShowing()) {
-            dismiss();
+        if (isShowing) {
+            setVisibility(GONE);
         } else {
-            showAtLocation(contentView, Gravity.BOTTOM, 0, 0);
+            setVisibility(VISIBLE);
         }
+        isShowing = !isShowing;
+    }
+
+    public boolean isShowing() {
+        return isShowing;
     }
 
     public void setEnable(boolean enable) {
@@ -96,5 +94,9 @@ public class BottomSheet extends PopupWindow implements CompoundButton.OnChecked
     @Override
     public void onClick(View view) {
         if (listener != null) listener.action();
+    }
+
+    public View getContentView() {
+        return contentView;
     }
 }

@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.selectPop.DataChangeListener
+import com.example.myapplication.selectPop.EditSelectDataListener
 import com.example.myapplication.selectPop.SelectHandler
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.Dispatchers
@@ -13,8 +14,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class MainActivity : AppCompatActivity(), DataChangeListener<Data>,
-    SelectHandler.EditSelectDataListener<Data> {
+class MainActivity : AppCompatActivity(), DataChangeListener<Data>, EditSelectDataListener<Data> {
 
     private lateinit var handler: SelectHandler<Data>
     private val data: ArrayList<Data> = ArrayList()
@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity(), DataChangeListener<Data>,
         adapter = Adapter(data, this, this)
         recycler.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
         recycler.adapter = adapter
-        handler = SelectHandler.instance(this, adapter, recycler, bottom_layout, this)
+        handler = SelectHandler.instance(this, adapter, this)
     }
 
     fun showDialog(view: View) {

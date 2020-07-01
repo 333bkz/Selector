@@ -1,42 +1,45 @@
 package com.example.myapplication.selectPop;
 
-import android.content.Context;
+import android.app.Activity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SelectHandler<T extends Select> implements BottomSheet.StateChangeListener {
+public class SelectHandler<T extends Select> implements StateChangeListener {
     private BaseAdapter<T, ?> adapter;
-    private BottomSheet dialog;
-    private RecyclerView recyclerView;
-    private View placeView;
+    private BottomLayout dialog;
     private EditSelectDataListener<T> listener;
-
-    public interface EditSelectDataListener<T> {
-        void edit(List<T> selects);
-    }
 
     private SelectHandler() {
     }
 
-    public static <T extends Select> SelectHandler<T> instance(Context context,
+    public static <T extends Select> SelectHandler<T> instance(Activity activity,
                                                                BaseAdapter<T, ?> adapter,
-                                                               RecyclerView recyclerView,
-                                                               View placeView,
                                                                EditSelectDataListener<T> listener) {
         SelectHandler<T> instance = new SelectHandler<>();
-        instance.placeView = placeView;
-        instance.recyclerView = recyclerView;
         instance.adapter = adapter;
         instance.listener = listener;
-        instance.dialog = new BottomSheet(context);
+        instance.dialog = new BottomLayout(activity);
         instance.dialog.setStateChangeListener(instance);
+        //使用LinearLayout替换根布局 再添加到该LinearLayout中
+        View decorView = activity.getWindow().getDecorView();
+        FrameLayout contentParent = decorView.findViewById(android.R.id.content);
+        View beforeContent = contentParent.getChildAt(0);
+        contentParent.removeView(beforeContent);
+        LinearLayout content = new LinearLayout(activity);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        contentParent.addView(content);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                0, 1f);
+        beforeContent.setLayoutParams(layoutParams);
+        content.addView(beforeContent);
+        content.addView(instance.dialog);
         return instance;
     }
 
@@ -47,22 +50,6 @@ public class SelectHandler<T extends Select> implements BottomSheet.StateChangeL
         dialog.show();
         adapter.notifyShowSelectChanged(dialog.isShowing());
         dialog.setEnable(!adapter.getData().isEmpty());
-
-        if (placeView.getHeight() == 0) {
-            dialog.getContentView().measure(0, 0);
-            final int h = dialog.getContentView().getMeasuredHeight();
-            final LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h);
-            placeView.setLayoutParams(params);
-        }
-
-        if (dialog.isShowing()) {
-            placeView.setVisibility(View.VISIBLE);
-            final boolean isVisBottom = isVisBottom(recyclerView);
-            if (isVisBottom)
-                recyclerView.scrollToPosition(adapter.getItemCount() - 1);
-        } else {
-            placeView.setVisibility(View.GONE);
-        }
     }
 
     public void onChanged(int index) {
@@ -111,16 +98,5 @@ public class SelectHandler<T extends Select> implements BottomSheet.StateChangeL
             if (select != null)
                 listener.edit(select);
         }
-    }
-
-    public boolean isVisBottom(RecyclerView recyclerView) {
-        LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-        int lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
-        int visibleItemCount = layoutManager.getChildCount();
-        int totalItemCount = layoutManager.getItemCount();
-        int state = recyclerView.getScrollState();
-        return visibleItemCount > 0
-                && lastVisibleItemPosition == totalItemCount - 1
-                && state == RecyclerView.SCROLL_STATE_IDLE;
     }
 }
